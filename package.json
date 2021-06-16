@@ -1,6 +1,6 @@
 {
   "name": "test-make-cli",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Test to make a CLI version",
   "main": "index.js",
   "scripts": {
@@ -32,5 +32,8 @@
     "simple-git": "^2.40.0",
     "touch": "^3.1.0"
   },
-  "devDependencies": {}
+  "devDependencies": {},
+  "bin": {
+    "test-make-cli": "./index.js"
+  }
 }

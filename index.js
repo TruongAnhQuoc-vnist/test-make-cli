@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const clear = require('clear');
 const chalk = require('chalk');
 const figlet = require('figlet');
@@ -34,18 +36,29 @@ prompt.get(listQuestions, function (err, result) {
 
     if (!fs.existsSync(currPath)) {
         try {
-            git.clone('https://github.com/amela-technology/react-native-templet-v1.git');
+            git.clone('https://github.com/amela-technology/react-native-templet-v1.git')
+            .then(() => {
+                try {
+                    fs.renameSync(currPath, newPath);
+                    console.log("Successfully renamed the directory.");
+                } catch (err) {
+                    console.log('Rename err: ', err);
+                }
+            })
+            .catch(cloneErr => {
+                console.log('Clone err: ', cloneErr)
+            });
         } catch (err) {
             console.log('Clone err: ', err);
         }
     } else {
         console.log('Folder has already existed!')
-    }
-    try {
-        fs.renameSync(currPath, newPath);
-        console.log("Successfully renamed the directory.");
-    } catch (err) {
-        console.log('Rename err: ', err);
+        try {
+            fs.renameSync(currPath, newPath);
+            console.log("Successfully renamed the directory.");
+        } catch (err) {
+            console.log('Rename err: ', err);
+        }
     }
 });
 
