@@ -1,0 +1,36 @@
+{
+  "name": "test-make-cli",
+  "version": "1.0.0",
+  "description": "Test to make a CLI version",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TruongAnhQuoc-vnist/test-make-cli.git"
+  },
+  "keywords": [],
+  "author": "spquyt",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/TruongAnhQuoc-vnist/test-make-cli/issues"
+  },
+  "homepage": "https://github.com/TruongAnhQuoc-vnist/test-make-cli#readme",
+  "dependencies": {
+    "chalk": "^4.1.1",
+    "clear": "^0.1.0",
+    "clui": "^0.3.6",
+    "colors": "^1.4.0",
+    "configstore": "^6.0.0",
+    "figlet": "^1.5.0",
+    "inquirer": "^8.1.1",
+    "lodash": "^4.17.21",
+    "minimist": "^1.2.5",
+    "prompt": "^1.1.0",
+    "prompt-sync": "^4.2.0",
+    "simple-git": "^2.40.0",
+    "touch": "^3.1.0"
+  },
+  "devDependencies": {}
+}

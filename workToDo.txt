@@ -1,0 +1,4 @@
+1. Tạo danh sách câu hỏi để người dùng nhập input và nhận được input (tên project, url remote của project)
+2. Clone được project từ github về
+3. Publish được lên npm
+4. Sửa được các file trong ios và android
