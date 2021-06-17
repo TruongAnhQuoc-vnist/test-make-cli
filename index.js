@@ -5,6 +5,7 @@ const chalk = require('chalk');
 const figlet = require('figlet');
 const fs = require("fs");
 const CustomPromise = require('./promises');
+const Helpers = require('./helpers');
 
 const listQuestions = ['Project name', 'Project display name'];
 
@@ -12,6 +13,8 @@ const isWinOS = process.platform === "win32";
 
 const execFunction = async () => {
     // clear();
+    Helpers.checkUpdate();
+    
     console.log(
         chalk.yellow(
             figlet.textSync('AMELA', { horizontalLayout: 'full' })

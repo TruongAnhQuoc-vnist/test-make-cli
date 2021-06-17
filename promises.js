@@ -83,28 +83,6 @@ const replaceStringFilePromise = async (filePath, oldString, newString) => {
     })
 }
 
-// const npmInstallModulePromise = async (modulesList) => {
-//     return new Promise((resolve, reject) => {
-//         npm.load((loadErr) => {
-//             // handle errors
-//             if (loadErr) {
-//                 reject(loadErr);
-//             }
-//             npm.commands.install(modulesList, (installErr, data) => {
-//                 if (installErr) {
-//                     reject(installErr);
-//                 } else {
-//                     console.log('data: ', data);
-//                 }
-//             });
-//             npm.on('log', (message) => {
-//                 console.log(message);
-//             });
-//             resolve(null);
-//         });
-//     })
-// }
-
 const CustomPromise = {
     gitClonePromise,
     promptGetListQuestionPromise,
