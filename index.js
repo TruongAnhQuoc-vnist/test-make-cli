@@ -19,7 +19,7 @@ const listQuestions = ['Project name', 'Project display name'];
 const isWinOS = process.platform === "win32";
 
 const execFunction = async () => {
-    // clear();
+    clear();
     // Helpers.checkUpdate();
 
     console.log(
@@ -52,12 +52,18 @@ const execFunction = async () => {
             await CustomPromise.replaceStringFilePromise(`${newPath}/.gitignore`, "ios", "");
             await CustomPromise.replaceStringFilePromise(`${newPath}/package.json`,
                 "\"postinstall\": \"cd scripts && sh ./fix-lib.sh && cd .. && cd ios && pod install && cd .. && npx jetifier\",", "");
-            await CustomPromise.execCommandLinePromise(`cd ./${resultQuestions[listQuestions[0]]} && yarn && npx react-native eject ${isWinOS ? '' : '&& cd ios && pod install'}`,
+            await CustomPromise.execCommandLinePromise(`cd ./${resultQuestions[listQuestions[0]]} && yarn && npx react-native eject`,
                 `Installing libraries to ${newPath}...`);
+            await CustomPromise.execCommandLinePromise(`cd ./${resultQuestions[listQuestions[0]]} && npx jetifier`, `Jetifier installing for Android to ${newPath}...`);
 
-            // await CustomPromise.replaceStringFilePromise(`${newPath}/package.json`, "\"pod-install\": \"cd ios && pod install\",",
-            //     "\"pod-install\": \"cd ios && pod install\",\n\"postinstall\": \"cd scripts && sh ./fix-lib.sh && cd .. && cd ios && pod install && cd .. && npx jetifier\",");
-            // await CustomPromise.execCommandLinePromise(`cd ./${resultQuestions[listQuestions[0]]} && yarn`, `Post installing to ${newPath}...`);
+
+            await CustomPromise.replaceStringFilePromise(`${newPath}/package.json`, "\"pod-install\": \"cd ios && pod install\",",
+                `\"pod-install\": \"cd ios && pod install\",\n\"postinstall\": \"cd scripts && sh ./fix-lib.sh ${isWinOS ? "" : "&& cd .. && cd ios && pod install && cd .."} && npx jetifier\",`);
+            if (!isWinOS) {
+                await CustomPromise.execCommandLinePromise(`cd ./${resultQuestions[listQuestions[0]]} && cd scripts && sh ./fix-lib.sh`, `Applying script to ${newPath}...`);
+                await CustomPromise.execCommandLinePromise(`pod repo update`, `Pod repo updating...`);
+                await CustomPromise.execCommandLinePromise(`cd ./${resultQuestions[listQuestions[0]]} && cd ios && pod install`, `Pod installing for iOS to ${newPath}...`);
+            }
         }
 
         if (!fs.existsSync(newPath)) {
