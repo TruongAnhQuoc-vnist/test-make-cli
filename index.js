@@ -18,8 +18,10 @@ const listQuestions = ['Project name', 'Project display name'];
 
 const isWinOS = process.platform === "win32";
 
+const IDEWorkspaceString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n<plist version=\"1.0\">\n<dict>\n<key>IDEDidComputeMac32BitWarning</key>\n<true/>\n</dict>\n</plist>";
+
 const execFunction = async () => {
-    clear();
+    // clear();
     // Helpers.checkUpdate();
 
     console.log(
@@ -42,27 +44,41 @@ const execFunction = async () => {
         }
 
         const resultQuestions = await CustomPromise.promptGetListQuestionPromise(listQuestions);
-        const newPath = `./${resultQuestions[listQuestions[0]]}`;
+        const appName = resultQuestions[listQuestions[0]];
+        const newPath = `./${appName}`;
 
         const normalFlowInstall = async () => {
-            await CustomPromise.replaceStringFilePromise(`${newPath}/app.json`, "\"name\": \"DemoApp\"", `\"name\": \"${resultQuestions[listQuestions[0]]}\"`);
+            await CustomPromise.replaceStringFilePromise(`${newPath}/app.json`, "\"name\": \"DemoApp\"", `\"name\": \"${appName}\"`);
             await CustomPromise.replaceStringFilePromise(`${newPath}/app.json`, "\"displayName\": \"Demo App\"", `\"displayName\": \"${resultQuestions[listQuestions[1]]}\"`);
-            await CustomPromise.replaceStringFilePromise(`${newPath}/package.json`, "\"name\": \"DemoApp\"", `\"name\": \"${resultQuestions[listQuestions[0]]}\"`);
+            await CustomPromise.replaceStringFilePromise(`${newPath}/package.json`, "\"name\": \"DemoApp\"", `\"name\": \"${appName}\"`);
             await CustomPromise.replaceStringFilePromise(`${newPath}/.gitignore`, "android", "");
             await CustomPromise.replaceStringFilePromise(`${newPath}/.gitignore`, "ios", "");
             await CustomPromise.replaceStringFilePromise(`${newPath}/package.json`,
                 "\"postinstall\": \"cd scripts && sh ./fix-lib.sh && cd .. && cd ios && pod install && cd .. && npx jetifier\",", "");
-            await CustomPromise.execCommandLinePromise(`cd ./${resultQuestions[listQuestions[0]]} && yarn && npx react-native eject`,
+            await CustomPromise.execCommandLinePromise(`cd ./${appName} && yarn && npx react-native eject`,
                 `Installing libraries to ${newPath}...`);
-            await CustomPromise.execCommandLinePromise(`cd ./${resultQuestions[listQuestions[0]]} && npx jetifier`, `Jetifier installing for Android to ${newPath}...`);
+            await CustomPromise.execCommandLinePromise(`cd ./${appName} && npx jetifier`, `Jetifier installing for Android to ${newPath}...`);
 
 
             await CustomPromise.replaceStringFilePromise(`${newPath}/package.json`, "\"pod-install\": \"cd ios && pod install\",",
                 `\"pod-install\": \"cd ios && pod install\",\n\"postinstall\": \"cd scripts && sh ./fix-lib.sh ${isWinOS ? "" : "&& cd .. && cd ios && pod install && cd .."} && npx jetifier\",`);
             if (!isWinOS) {
-                await CustomPromise.execCommandLinePromise(`cd ./${resultQuestions[listQuestions[0]]} && cd scripts && sh ./fix-lib.sh`, `Applying script to ${newPath}...`);
+                // Apply fix script sh an pod repo update
+                await CustomPromise.execCommandLinePromise(`cd ./${appName} && cd scripts && sh ./fix-lib.sh`, `Applying script to ${newPath}...`);
                 await CustomPromise.execCommandLinePromise(`pod repo update`, `Pod repo updating...`);
-                await CustomPromise.execCommandLinePromise(`cd ./${resultQuestions[listQuestions[0]]} && cd ios && pod install`, `Pod installing for iOS to ${newPath}...`);
+                await CustomPromise.execCommandLinePromise(`cd ./${appName} && cd ios && pod install`, `Pod installing for iOS to ${newPath}...`);
+                
+                // Fix bug useFlipper
+                await CustomPromise.replaceStringFilePromise(`${newPath}/ios/Podfile`, "use_flipper!()", "use_flipper!({ 'Flipper-Folly' => '2.5.3', 'Flipper' => '0.87.0', 'Flipper-RSocket' => '1.3.1' })");
+                await CustomPromise.execCommandLinePromise(`cd ./${appName} && cd ios && pod install`, `Update flipper iOS to ${newPath}...`);
+
+                // Add workspace check plist
+                await CustomPromise.execCommandLinePromise(`cd ./${appName}/ios/${appName}.xcworkspace && mkdir xcshareddata`, 
+                    `Making folder xcshareddata...`);
+                await CustomPromise.createNewFilePromise(`./${appName}/ios/${appName}.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist`, IDEWorkspaceString);
+
+                // Running on device
+                await CustomPromise.execCommandLinePromise(`cd ./${appName} && npx react-native run-ios`, `Running iOS...`);
             }
         }
 

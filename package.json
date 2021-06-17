@@ -1,6 +1,6 @@
 {
   "name": "test-make-cli",
-  "version": "1.0.8",
+  "version": "1.0.11",
   "description": "Test to make a CLI version",
   "main": "index.js",
   "scripts": {

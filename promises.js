@@ -49,7 +49,7 @@ const promptGetListQuestionPromise = async (listQuestions) => {
     })
 }
 
-const execCommandLinePromise = async (execString, cmdMessage = 'Execting command line...') => {
+const execCommandLinePromise = async (execString, cmdMessage = 'Executing command line...') => {
     const execCMDStatus = new Spinner(cmdMessage);
     execCMDStatus.start();
     return new Promise((resolve, reject) => {
@@ -91,11 +91,40 @@ const replaceStringFilePromise = async (filePath, oldString, newString) => {
     })
 }
 
+const createNewFilePromise = async (filePath, content) => {
+    return new Promise((resolve, reject) => {
+        fs.writeFile(filePath, content, (err) => {
+            if (err) {
+                reject(err);
+            } else {
+                // console.log(`Data of file ${filePath} has been changed! \n`);
+                resolve(null);
+            }
+        });
+    })
+}
+
+const readFilePromise = async (filePath) => {
+    return new Promise((resolve, reject) => {
+        fs.readFile(filePath, (err, data) => {
+            if (err) {
+                console.log('Replace name string err: ', err);
+                reject(err);
+            }
+            else {
+                resolve(data.toString());
+            }
+        });
+    })
+}
+
 const CustomPromise = {
     gitClonePromise,
     promptGetListQuestionPromise,
     execCommandLinePromise,
     replaceStringFilePromise,
+    createNewFilePromise,
+    readFilePromise,
 }
 
 module.exports = CustomPromise;
