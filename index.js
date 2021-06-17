@@ -48,23 +48,25 @@ const execFunction = async () => {
         const newPath = `./${appName}`;
 
         const normalFlowInstall = async () => {
+            // Change app name and display name
             await CustomPromise.replaceStringFilePromise(`${newPath}/app.json`, "\"name\": \"DemoApp\"", `\"name\": \"${appName}\"`);
             await CustomPromise.replaceStringFilePromise(`${newPath}/app.json`, "\"displayName\": \"Demo App\"", `\"displayName\": \"${resultQuestions[listQuestions[1]]}\"`);
             await CustomPromise.replaceStringFilePromise(`${newPath}/package.json`, "\"name\": \"DemoApp\"", `\"name\": \"${appName}\"`);
             await CustomPromise.replaceStringFilePromise(`${newPath}/.gitignore`, "android", "");
             await CustomPromise.replaceStringFilePromise(`${newPath}/.gitignore`, "ios", "");
+            // Handle script postinstall
             await CustomPromise.replaceStringFilePromise(`${newPath}/package.json`,
                 "\"postinstall\": \"cd scripts && sh ./fix-lib.sh && cd .. && cd ios && pod install && cd .. && npx jetifier\",", "");
             await CustomPromise.execCommandLinePromise(`cd ./${appName} && yarn && npx react-native eject`,
                 `Installing libraries to ${newPath}...`);
             await CustomPromise.execCommandLinePromise(`cd ./${appName} && npx jetifier`, `Jetifier installing for Android to ${newPath}...`);
-
-
             await CustomPromise.replaceStringFilePromise(`${newPath}/package.json`, "\"pod-install\": \"cd ios && pod install\",",
                 `\"pod-install\": \"cd ios && pod install\",\n\"postinstall\": \"cd scripts && sh ./fix-lib.sh ${isWinOS ? "" : "&& cd .. && cd ios && pod install && cd .."} && npx jetifier\",`);
+            // Apply fix script sh
+            await CustomPromise.execCommandLinePromise(`cd ./${appName} && cd scripts && sh ./fix-lib.sh`, `Applying script to ${newPath}...`);
+            
             if (!isWinOS) {
-                // Apply fix script sh an pod repo update
-                await CustomPromise.execCommandLinePromise(`cd ./${appName} && cd scripts && sh ./fix-lib.sh`, `Applying script to ${newPath}...`);
+                // Pod repo update
                 await CustomPromise.execCommandLinePromise(`pod repo update`, `Pod repo updating...`);
                 await CustomPromise.execCommandLinePromise(`cd ./${appName} && cd ios && pod install`, `Pod installing for iOS to ${newPath}...`);
                 
@@ -79,6 +81,10 @@ const execFunction = async () => {
 
                 // Running on device
                 await CustomPromise.execCommandLinePromise(`cd ./${appName} && npx react-native run-ios`, `Running iOS...`);
+            } else {
+                console.log(
+                    chalk.red('Sorry! WindowsOS has not been fully supported yet. Please change to MacOS!')
+                );
             }
         }
 
