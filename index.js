@@ -6,7 +6,7 @@ const figlet = require('figlet');
 const fs = require("fs");
 const CustomPromise = require('./promises');
 
-const listQuestions = ['Project name', 'Project display name', 'Project remote URL'];
+const listQuestions = ['Project name', 'Project display name'];
 
 const isWinOS = process.platform === "win32";
 
@@ -34,17 +34,26 @@ const execFunction = async () => {
         const resultQuestions = await CustomPromise.promptGetListQuestionPromise(listQuestions);
         const newPath = `./${resultQuestions[listQuestions[0]]}`;
 
-        if (!fs.existsSync(newPath)) {
-            await CustomPromise.gitClonePromise();
-            fs.renameSync(currPath, newPath);
-
+        const normalFlowInstall = async () => {
             await CustomPromise.replaceStringFilePromise(`${newPath}/app.json`, "\"name\": \"DemoApp\"", `\"name\": \"${resultQuestions[listQuestions[0]]}\"`);
             await CustomPromise.replaceStringFilePromise(`${newPath}/app.json`, "\"displayName\": \"Demo App\"", `\"displayName\": \"${resultQuestions[listQuestions[1]]}\"`);
             await CustomPromise.replaceStringFilePromise(`${newPath}/package.json`, "\"name\": \"DemoApp\"", `\"name\": \"${resultQuestions[listQuestions[0]]}\"`);
             await CustomPromise.replaceStringFilePromise(`${newPath}/.gitignore`, "android", "");
             await CustomPromise.replaceStringFilePromise(`${newPath}/.gitignore`, "ios", "");
+            await CustomPromise.replaceStringFilePromise(`${newPath}/package.json`,
+                "\"postinstall\": \"cd scripts && sh ./fix-lib.sh && cd .. && cd ios && pod install && cd .. && npx jetifier\",", "");
+            await CustomPromise.execCommandLinePromise(`cd ./${resultQuestions[listQuestions[0]]} && yarn && npx react-native eject ${isWinOS ? '' : '&& cd ios && pod install'}`,
+                `Installing libraries to ${newPath}...`);
 
-            await CustomPromise.execCommandLinePromise(`cd ${newPath} && yarn && react-native eject ${isWinOS ? null : '&& cd ios && pod install'}`, `Installing libraries to ${newPath}...`);
+            // await CustomPromise.replaceStringFilePromise(`${newPath}/package.json`, "\"pod-install\": \"cd ios && pod install\",",
+            //     "\"pod-install\": \"cd ios && pod install\",\n\"postinstall\": \"cd scripts && sh ./fix-lib.sh && cd .. && cd ios && pod install && cd .. && npx jetifier\",");
+            // await CustomPromise.execCommandLinePromise(`cd ./${resultQuestions[listQuestions[0]]} && yarn`, `Post installing to ${newPath}...`);
+        }
+
+        if (!fs.existsSync(newPath)) {
+            await CustomPromise.gitClonePromise();
+            fs.renameSync(currPath, newPath);
+            await normalFlowInstall();
             return;
         }
         if (fs.existsSync(newPath)) {
@@ -55,14 +64,7 @@ const execFunction = async () => {
                 await CustomPromise.execCommandLinePromise(`cd ${currPath} && rm -rf .git`);
                 await CustomPromise.execCommandLinePromise(`cp -a ${currPath}/. ${newPath}/`, `Copying folder ${currPath} to ${newPath}...`);
                 await CustomPromise.execCommandLinePromise(`rmdir /s /q ${currPath.replace('./', '')}`, `Removing folder ${currPath}...`);
-
-                await CustomPromise.replaceStringFilePromise(`${newPath}/app.json`, "\"name\": \"DemoApp\"", `\"name\": \"${resultQuestions[listQuestions[0]]}\"`);
-                await CustomPromise.replaceStringFilePromise(`${newPath}/app.json`, "\"displayName\": \"Demo App\"", `\"displayName\": \"${resultQuestions[listQuestions[1]]}\"`);
-                await CustomPromise.replaceStringFilePromise(`${newPath}/package.json`, "\"name\": \"DemoApp\"", `\"name\": \"${resultQuestions[listQuestions[0]]}\"`);
-                await CustomPromise.replaceStringFilePromise(`${newPath}/.gitignore`, "android", "");
-                await CustomPromise.replaceStringFilePromise(`${newPath}/.gitignore`, "ios", "");
-
-                await CustomPromise.execCommandLinePromise(`cd ${newPath} && yarn && react-native eject ${isWinOS ? null : '&& cd ios && pod install'}`, `Installing libraries to ${newPath}...`);
+                await normalFlowInstall();
                 return;
             }
             return;

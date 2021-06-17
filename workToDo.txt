@@ -1,5 +1,3 @@
-1. Thêm được npm run init-project
-2. Trỏ được repo đến địa chỉ remote || copy hết code vào folder repo đã clone sẵn
-3. Custom được các file react native config bằng code
-4. Fix được bug system cannot find specific path
-5. Thông báo được cho người dùng khi có bản mới
+1. Custom được các file react native config bằng code
+2. Thông báo được cho người dùng khi có bản mới
+3. Xem lại cách postInstall hiệu quả

@@ -46,13 +46,13 @@ const execCommandLinePromise = async (execString, cmdMessage = 'Execting command
     execCMDStatus.start();
     return new Promise((resolve, reject) => {
         exec(execString, (err, stdout, stderr) => {
+            stdout && console.log('\nstdout: ', stdout);
+            stderr && console.log('stderr: ', stderr);
             if (err) {
                 execCMDStatus.stop();
                 reject(err);
             }
             else {
-                stdout && console.log('\nstdout: ', stdout);
-                stderr && console.log('stderr: ', stderr);
                 execCMDStatus.stop();
                 resolve(null);
             }
