@@ -3,69 +3,73 @@
 const clear = require('clear');
 const chalk = require('chalk');
 const figlet = require('figlet');
-const prompt = require('prompt');
-const colors = require("colors/safe");
-const simpleGit = require('simple-git');
-const git = simpleGit();
-const CLI = require('clui');
-const Spinner = CLI.Spinner;
 const fs = require("fs");
-// const prompt = require('prompt-sync')();
+const CustomPromise = require('./promises');
 
-clear();
+const listQuestions = ['Project name', 'Project display name', 'Project remote URL'];
 
-console.log(
-    chalk.yellow(
-        figlet.textSync('AMELA', { horizontalLayout: 'full' })
-    )
-);
+const isWinOS = process.platform === "win32";
 
-const listQuestions = ['Project name', 'Project remote URL']
+const execFunction = async () => {
+    // clear();
+    console.log(
+        chalk.yellow(
+            figlet.textSync('AMELA', { horizontalLayout: 'full' })
+        )
+    );
+    try {
+        const currPath = "./react-native-templet-v1";
 
-prompt.message = colors.white("");
-prompt.delimiter = colors.white(":");
-prompt.start();
-
-prompt.get(listQuestions, function (err, result) {
-    if (err) { return onPromptErr(err); }
-    console.log('Project name: ' + result[listQuestions[0]]);
-    console.log('Project remote URL: ' + result[listQuestions[1]]);
-
-    const currPath = "./react-native-templet-v1";
-    const newPath = `./${result[listQuestions[0]]}`;
-
-    if (!fs.existsSync(currPath)) {
-        try {
-            git.clone('https://github.com/amela-technology/react-native-templet-v1.git')
-            .then(() => {
-                try {
-                    fs.renameSync(currPath, newPath);
-                    console.log("Successfully renamed the directory.");
-                } catch (err) {
-                    console.log('Rename err: ', err);
-                }
-            })
-            .catch(cloneErr => {
-                console.log('Clone err: ', cloneErr)
-            });
-        } catch (err) {
-            console.log('Clone err: ', err);
+        if (fs.existsSync(currPath)) {
+            const listQuestionsConfirmRemove = ['react-native-templet-v1 already existed! Do you want to remove and reinstall it? (y/n)'];
+            const resultConfirmRemove = await CustomPromise.promptGetListQuestionPromise(listQuestionsConfirmRemove);
+            if (resultConfirmRemove[listQuestionsConfirmRemove[0]].toString().trim().toLowerCase() === 'y') {
+                await CustomPromise.execCommandLinePromise(`rmdir /s /q ${currPath.replace('./', '')}`, `Removing folder ${currPath}...`);
+            }
+            else {
+                return;
+            }
         }
-    } else {
-        console.log('Folder has already existed!')
-        try {
+
+        const resultQuestions = await CustomPromise.promptGetListQuestionPromise(listQuestions);
+        const newPath = `./${resultQuestions[listQuestions[0]]}`;
+
+        if (!fs.existsSync(newPath)) {
+            await CustomPromise.gitClonePromise();
             fs.renameSync(currPath, newPath);
-            console.log("Successfully renamed the directory.");
-        } catch (err) {
-            console.log('Rename err: ', err);
-        }
-    }
-});
 
-function onPromptErr(err) {
-    console.log(err);
-    return 1;
+            await CustomPromise.replaceStringFilePromise(`${newPath}/app.json`, "\"name\": \"DemoApp\"", `\"name\": \"${resultQuestions[listQuestions[0]]}\"`);
+            await CustomPromise.replaceStringFilePromise(`${newPath}/app.json`, "\"displayName\": \"Demo App\"", `\"displayName\": \"${resultQuestions[listQuestions[1]]}\"`);
+            await CustomPromise.replaceStringFilePromise(`${newPath}/package.json`, "\"name\": \"DemoApp\"", `\"name\": \"${resultQuestions[listQuestions[0]]}\"`);
+            await CustomPromise.replaceStringFilePromise(`${newPath}/.gitignore`, "android", "");
+            await CustomPromise.replaceStringFilePromise(`${newPath}/.gitignore`, "ios", "");
+
+            await CustomPromise.execCommandLinePromise(`cd ${newPath} && yarn && react-native eject ${isWinOS ? null : '&& cd ios && pod install'}`, `Installing libraries to ${newPath}...`);
+            return;
+        }
+        if (fs.existsSync(newPath)) {
+            const listQuestionsOverrideRepo = ['Folder with same name already existed. Do you want to override it? (y/n)'];
+            const resultOverrideRepo = await CustomPromise.promptGetListQuestionPromise(listQuestionsOverrideRepo);
+            if (resultOverrideRepo[listQuestionsOverrideRepo[0]].toString().trim().toLowerCase() === 'y') {
+                await CustomPromise.gitClonePromise();
+                await CustomPromise.execCommandLinePromise(`cd ${currPath} && rm -rf .git`);
+                await CustomPromise.execCommandLinePromise(`cp -a ${currPath}/. ${newPath}/`, `Copying folder ${currPath} to ${newPath}...`);
+                await CustomPromise.execCommandLinePromise(`rmdir /s /q ${currPath.replace('./', '')}`, `Removing folder ${currPath}...`);
+
+                await CustomPromise.replaceStringFilePromise(`${newPath}/app.json`, "\"name\": \"DemoApp\"", `\"name\": \"${resultQuestions[listQuestions[0]]}\"`);
+                await CustomPromise.replaceStringFilePromise(`${newPath}/app.json`, "\"displayName\": \"Demo App\"", `\"displayName\": \"${resultQuestions[listQuestions[1]]}\"`);
+                await CustomPromise.replaceStringFilePromise(`${newPath}/package.json`, "\"name\": \"DemoApp\"", `\"name\": \"${resultQuestions[listQuestions[0]]}\"`);
+                await CustomPromise.replaceStringFilePromise(`${newPath}/.gitignore`, "android", "");
+                await CustomPromise.replaceStringFilePromise(`${newPath}/.gitignore`, "ios", "");
+
+                await CustomPromise.execCommandLinePromise(`cd ${newPath} && yarn && react-native eject ${isWinOS ? null : '&& cd ios && pod install'}`, `Installing libraries to ${newPath}...`);
+                return;
+            }
+            return;
+        }
+    } catch (err) {
+        console.log('err: ', err);
+    }
 }
 
-// const projectName = prompt('Project name: ');
-// const projectRemoteURL = prompt('Project remote URL: ');
+execFunction();

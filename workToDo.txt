@@ -1,4 +1,5 @@
-1. Tạo danh sách câu hỏi để người dùng nhập input và nhận được input (tên project, url remote của project)
-2. Clone được project từ github về
-3. Publish được lên npm
-4. Sửa được các file trong ios và android
+1. Thêm được npm run init-project
+2. Trỏ được repo đến địa chỉ remote || copy hết code vào folder repo đã clone sẵn
+3. Custom được các file react native config bằng code
+4. Fix được bug system cannot find specific path
+5. Thông báo được cho người dùng khi có bản mới

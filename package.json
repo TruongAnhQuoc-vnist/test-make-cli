@@ -1,6 +1,6 @@
 {
   "name": "test-make-cli",
-  "version": "1.0.1",
+  "version": "1.0.4",
   "description": "Test to make a CLI version",
   "main": "index.js",
   "scripts": {
@@ -28,7 +28,6 @@
     "lodash": "^4.17.21",
     "minimist": "^1.2.5",
     "prompt": "^1.1.0",
-    "prompt-sync": "^4.2.0",
     "simple-git": "^2.40.0",
     "touch": "^3.1.0"
   },
