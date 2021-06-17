@@ -1,11 +1,18 @@
 #!/usr/bin/env node
 
+// import clear from 'clear';
+// import chalk from 'chalk';
+// import figlet from 'figlet';
+// import fs from 'fs';
+// import CustomPromise from './promises';
+// import Helpers from './helpers';
+
 const clear = require('clear');
 const chalk = require('chalk');
 const figlet = require('figlet');
 const fs = require("fs");
 const CustomPromise = require('./promises');
-const Helpers = require('./helpers');
+// const Helpers = require('./helpers');
 
 const listQuestions = ['Project name', 'Project display name'];
 
@@ -13,8 +20,8 @@ const isWinOS = process.platform === "win32";
 
 const execFunction = async () => {
     // clear();
-    Helpers.checkUpdate();
-    
+    // Helpers.checkUpdate();
+
     console.log(
         chalk.yellow(
             figlet.textSync('AMELA', { horizontalLayout: 'full' })

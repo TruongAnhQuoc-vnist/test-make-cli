@@ -6,6 +6,14 @@ const { Spinner } = require('clui');
 const { exec } = require('child_process');
 const fs = require("fs");
 
+// import simpleGit from 'simple-git';
+// const git = simpleGit();
+// import prompt from 'prompt';
+// import colors from 'colors/safe';
+// import { Spinner } from 'clui';
+// import { exec } from 'child_process';
+// import fs from 'fs';
+
 const gitClonePromise = async (localPath = undefined) => {
     const gitCloneStatus = new Spinner('Cloning @amela/react-native-templet-v1...');
     return new Promise((resolve, reject) => {
