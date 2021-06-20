@@ -1,10 +1,11 @@
-const simpleGit = require('simple-git');
+const simpleGit = require("simple-git");
 const git = simpleGit();
-const prompt = require('prompt');
+const prompt = require("prompt");
 const colors = require("colors/safe");
-const { Spinner } = require('clui');
-const { exec } = require('child_process');
+const { Spinner } = require("clui");
+const { exec } = require("child_process");
 const fs = require("fs");
+const inquirer = require("inquirer");
 
 // import simpleGit from 'simple-git';
 // const git = simpleGit();
@@ -15,22 +16,27 @@ const fs = require("fs");
 // import fs from 'fs';
 
 const gitClonePromise = async (localPath = undefined) => {
-    const gitCloneStatus = new Spinner('Cloning @amela/react-native-templet-v1...');
+    const gitCloneStatus = new Spinner(
+        "Cloning @amela/react-native-templet-v1..."
+    );
     return new Promise((resolve, reject) => {
         gitCloneStatus.start();
-        git.clone('https://github.com/amela-technology/react-native-templet-v1.git', localPath)
+        git.clone(
+            "https://github.com/amela-technology/react-native-templet-v1.git",
+            localPath
+        )
             .then(() => {
-                console.log('\nCloning successfully!')
+                console.log("\nCloning successfully!");
                 resolve(null);
                 gitCloneStatus.stop();
             })
-            .catch(err => {
-                console.log('Git clone err: ', err);
+            .catch((err) => {
+                console.log("Git clone err: ", err);
                 reject(err);
                 gitCloneStatus.stop();
-            })
-    })
-}
+            });
+    });
+};
 
 const promptGetListQuestionPromise = async (listQuestions) => {
     return new Promise((resolve, reject) => {
@@ -39,43 +45,43 @@ const promptGetListQuestionPromise = async (listQuestions) => {
         prompt.start();
         prompt.get(listQuestions, function (err, result) {
             if (err) {
-                console.log('Prompt questions list err: ', err);
+                console.log("Prompt questions list err: ", err);
                 reject(err);
-            }
-            else {
+            } else {
                 resolve(result);
             }
         });
-    })
-}
+    });
+};
 
-const execCommandLinePromise = async (execString, cmdMessage = 'Executing command line...') => {
+const execCommandLinePromise = async (
+    execString,
+    cmdMessage = "Executing command line..."
+) => {
     const execCMDStatus = new Spinner(cmdMessage);
     execCMDStatus.start();
     return new Promise((resolve, reject) => {
         exec(execString, (err, stdout, stderr) => {
-            stdout && console.log('\nstdout: ', stdout);
-            stderr && console.log('stderr: ', stderr);
+            stdout && console.log("\nstdout: ", stdout);
+            stderr && console.log("stderr: ", stderr);
             if (err) {
                 execCMDStatus.stop();
                 reject(err);
-            }
-            else {
+            } else {
                 execCMDStatus.stop();
                 resolve(null);
             }
         });
-    })
-}
+    });
+};
 
 const replaceStringFilePromise = async (filePath, oldString, newString) => {
     return new Promise((resolve, reject) => {
         fs.readFile(filePath, (err, data) => {
             if (err) {
-                console.log('Replace name string err: ', err);
+                console.log("Replace name string err: ", err);
                 reject(err);
-            }
-            else {
+            } else {
                 data = data.toString();
                 data = data.replace(oldString, newString);
                 fs.writeFile(filePath, data, (err) => {
@@ -88,8 +94,8 @@ const replaceStringFilePromise = async (filePath, oldString, newString) => {
                 });
             }
         });
-    })
-}
+    });
+};
 
 const createNewFilePromise = async (filePath, content) => {
     return new Promise((resolve, reject) => {
@@ -101,22 +107,41 @@ const createNewFilePromise = async (filePath, content) => {
                 resolve(null);
             }
         });
-    })
-}
+    });
+};
 
 const readFilePromise = async (filePath) => {
     return new Promise((resolve, reject) => {
         fs.readFile(filePath, (err, data) => {
             if (err) {
-                console.log('Replace name string err: ', err);
+                console.log("Replace name string err: ", err);
                 reject(err);
-            }
-            else {
+            } else {
                 resolve(data.toString());
             }
         });
-    })
-}
+    });
+};
+
+const getRadioButtonAnswerPromise = async (question, choices) => {
+    const questionsList = [
+        {
+			type: "rawlist",
+			name: question,
+			choices,
+        },
+    ];
+    return new Promise((resolve, reject) => {
+        inquirer
+            .prompt(questionsList)
+            .then((answers) => {
+                resolve(answers);
+            })
+            .catch((error) => {
+                reject(error);
+            });
+    });
+};
 
 const CustomPromise = {
     gitClonePromise,
@@ -125,6 +150,7 @@ const CustomPromise = {
     replaceStringFilePromise,
     createNewFilePromise,
     readFilePromise,
-}
+    getRadioButtonAnswerPromise,
+};
 
 module.exports = CustomPromise;

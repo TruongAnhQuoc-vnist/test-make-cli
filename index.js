@@ -19,6 +19,7 @@ const listQuestions = ['Project name', 'Project display name'];
 const isWinOS = process.platform === "win32";
 
 const IDEWorkspaceString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n<plist version=\"1.0\">\n<dict>\n<key>IDEDidComputeMac32BitWarning</key>\n<true/>\n</dict>\n</plist>";
+const locationWhenInUseString = "config = use_native_modules!\npermissions_path = '../node_modules/react-native-permissions/ios'\npod 'Permission-LocationWhenInUse', :path => \"#{permissions_path}/LocationWhenInUse\"";
 
 const execFunction = async () => {
     // clear();
@@ -29,6 +30,7 @@ const execFunction = async () => {
             figlet.textSync('AMELA', { horizontalLayout: 'full' })
         )
     );
+    
     try {
         const currPath = "./react-native-templet-v1";
 
@@ -74,13 +76,24 @@ const execFunction = async () => {
                 await CustomPromise.replaceStringFilePromise(`${newPath}/ios/Podfile`, "use_flipper!()", "use_flipper!({ 'Flipper-Folly' => '2.5.3', 'Flipper' => '0.87.0', 'Flipper-RSocket' => '1.3.1' })");
                 await CustomPromise.execCommandLinePromise(`cd ./${appName} && cd ios && pod install`, `Update flipper iOS to ${newPath}...`);
 
+                // Fix react-native-permissions error handler
+                await CustomPromise.replaceStringFilePromise(`${newPath}/ios/Podfile`,"config = use_native_modules!", locationWhenInUseString)
+                await CustomPromise.execCommandLinePromise(`cd ./${appName} && cd ios && pod install`, `Update react-native-permissions iOS to ${newPath}...`);
+
                 // Add workspace check plist
                 await CustomPromise.execCommandLinePromise(`cd ./${appName}/ios/${appName}.xcworkspace && mkdir xcshareddata`, 
                     `Making folder xcshareddata...`);
                 await CustomPromise.createNewFilePromise(`./${appName}/ios/${appName}.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist`, IDEWorkspaceString);
 
-                // Running on device
-                await CustomPromise.execCommandLinePromise(`cd ./${appName} && npx react-native run-ios`, `Running iOS...`);
+                // Ask user what to do next
+                console.log('Installation completed!');
+                const postInstallQuestion = 'What do you want to do next?'
+                const postInstallAnswerObj = await CustomPromise.getRadioButtonAnswerPromise(postInstallQuestion, ['Run on iOS simulator', 'Nothing']);
+                const postInstallAnswer = postInstallAnswerObj[postInstallQuestion];
+                // Running on device iOS
+                if (postInstallAnswer === 'Run on iOS simulator') {
+                    await CustomPromise.execCommandLinePromise(`cd ./${appName} && npx react-native run-ios`, `Running iOS...`);
+                }
             } else {
                 console.log(
                     chalk.red('Sorry! WindowsOS has not been fully supported yet. Please change to MacOS!')
