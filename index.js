@@ -1,29 +1,44 @@
 #!/usr/bin/env node
 
-// import clear from 'clear';
-// import chalk from 'chalk';
-// import figlet from 'figlet';
-// import fs from 'fs';
-// import CustomPromise from './promises';
-// import Helpers from './helpers';
-
 const clear = require('clear');
 const chalk = require('chalk');
 const figlet = require('figlet');
 const fs = require("fs");
 const CustomPromise = require('./promises');
-// const Helpers = require('./helpers');
+const Helpers = require('./helpers');
+const yargs = require('yargs/yargs')
+const { hideBin } = require('yargs/helpers')
+const argv = yargs(hideBin(process.argv)).argv;
+const { version } = require('./package.json');
 
 const listQuestions = ['Project name', 'Project display name'];
-
 const isWinOS = process.platform === "win32";
-
 const IDEWorkspaceString = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n<plist version=\"1.0\">\n<dict>\n<key>IDEDidComputeMac32BitWarning</key>\n<true/>\n</dict>\n</plist>";
 const locationWhenInUseString = "config = use_native_modules!\npermissions_path = '../node_modules/react-native-permissions/ios'\npod 'Permission-LocationWhenInUse', :path => \"#{permissions_path}/LocationWhenInUse\"";
 
 const execFunction = async () => {
     // clear();
-    // Helpers.checkUpdate();
+
+    // Check for update
+    const checkUpdateResult = await Helpers.checkUpdate();
+    const {notifyType, boxenObj} = checkUpdateResult;
+    if (notifyType) {
+        console.log(boxenObj);
+        return;
+    }
+
+    // Check if flag is suitable
+    if (Object.keys(argv).length > 2) {
+        if (Object.keys(argv).length === 3 && argv.v) {
+            console.log(version);
+            return;
+        }
+        console.log(
+            chalk.red('Your syntax is not correct! Please try again! \nCorrect flags are:')
+        );
+        console.log('--version');
+        return;
+    }
 
     console.log(
         chalk.yellow(
@@ -38,7 +53,7 @@ const execFunction = async () => {
             const listQuestionsConfirmRemove = ['react-native-templet-v1 already existed! Do you want to remove and reinstall it? (y/n)'];
             const resultConfirmRemove = await CustomPromise.promptGetListQuestionPromise(listQuestionsConfirmRemove);
             if (resultConfirmRemove[listQuestionsConfirmRemove[0]].toString().trim().toLowerCase() === 'y') {
-                await CustomPromise.execCommandLinePromise(`rmdir /s /q ${currPath.replace('./', '')}`, `Removing folder ${currPath}...`);
+                await CustomPromise.execCommandLinePromise(`rm -r ${currPath.replace('./', '')}`, `Removing folder ${currPath}...`);
             }
             else {
                 return;
@@ -114,7 +129,7 @@ const execFunction = async () => {
                 await CustomPromise.gitClonePromise();
                 await CustomPromise.execCommandLinePromise(`cd ${currPath} && rm -rf .git`);
                 await CustomPromise.execCommandLinePromise(`cp -a ${currPath}/. ${newPath}/`, `Copying folder ${currPath} to ${newPath}...`);
-                await CustomPromise.execCommandLinePromise(`rmdir /s /q ${currPath.replace('./', '')}`, `Removing folder ${currPath}...`);
+                await CustomPromise.execCommandLinePromise(`rm -r ${currPath.replace('./', '')}`, `Removing folder ${currPath}...`);
                 await normalFlowInstall();
                 return;
             }

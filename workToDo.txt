@@ -1,3 +1,1 @@
 1. Custom được các file react native config bằng code
-2. Thông báo được cho người dùng khi có bản mới
-3. Xem lại cách postInstall hiệu quả
