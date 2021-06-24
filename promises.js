@@ -143,6 +143,18 @@ const getRadioButtonAnswerPromise = async (question, choices) => {
     });
 };
 
+const parseXCodeProjectPromise = async (myProj) => {
+    return new Promise((resolve, reject) => {
+        myProj.parse((err) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(null);
+            }
+        })
+    });
+};
+
 const CustomPromise = {
     gitClonePromise,
     promptGetListQuestionPromise,
@@ -151,6 +163,7 @@ const CustomPromise = {
     createNewFilePromise,
     readFilePromise,
     getRadioButtonAnswerPromise,
+    parseXCodeProjectPromise,
 };
 
 module.exports = CustomPromise;
