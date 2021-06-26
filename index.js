@@ -171,7 +171,83 @@ const setUpIosConfigWithEnv = async (
     }
 };
 
-const isPreProcessParamsSuccessful = async () => {
+const setUpAndroidConfigAllEnvs = async (appName, appDisplayName, appCode) => {
+    // Generate keystore files
+    const keyStgName = `${appCode}-staging-key.keystore`;
+    const aliasStg = `${appCode}-staging-alias`;
+    const keyProdName = `${appCode}-production-key.keystore`;
+    const aliasProd = `${appCode}-production-alias`;
+    await CustomPromise.replaceStringFilePromise(
+        `./${appName}/.gitignore`,
+        `*.keystore`,
+        ``
+    );
+    await CustomPromise.createKeyStorePromise(appCode, "staging");
+    await CustomPromise.createKeyStorePromise(appCode, "production");
+    await CustomPromise.execCommandLinePromise(
+        `mv ./${keyStgName} ./${appName}/android/app`,
+        `Moving staging keystore...`
+    );
+    await CustomPromise.execCommandLinePromise(
+        `mv ./${keyProdName} ./${appName}/android/app`,
+        `Moving production keystore...`
+    );
+    await CustomPromise.appendFilePromise(
+        `./${appName}/android/gradle.properties`,
+        `\n# Infomation dev keystore\nDEBUG_STORE_FILE=debug.keystore\nDEBUG_KEY_ALIAS=androiddebugkey\nDEBUG_STORE_PASSWORD=android\nDEBUG_KEY_PASSWORD=android\n# Infomation staging keystore\nSTAGING_STORE_FILE=${keyStgName}\nSTAGING_KEY_ALIAS=${aliasStg}\nSTAGING_STORE_PASSWORD=${Constants.KeyStorePassword}\nSTAGING_KEY_PASSWORD=${Constants.KeyStorePassword}\n# Infomation product keystore\nPRODUCT_STORE_FILE=${keyProdName}\nPRODUCT_KEY_ALIAS=${aliasProd}\nPRODUCT_STORE_PASSWORD=${Constants.KeyStorePassword}\nPRODUCT_KEY_PASSWORD=${Constants.KeyStorePassword}\n`
+    );
+
+    // Fixing app/build.gradle
+    const appBuildGradlePath = `./${appName}/android/app/build.gradle`;
+    await CustomPromise.replaceStringFilePromise(
+        appBuildGradlePath,
+        `apply plugin: \"com.android.application\"\n`,
+        `apply plugin: \"com.android.application\"\nproject.ext.envConfigFiles = [\n    dev: \".env.development\",\n    staging: \".env.staging\",\n    product: \".env.production\",\n    anothercustombuild: \".env\",\n]\n`
+    );
+    await CustomPromise.replaceStringFilePromise(
+        appBuildGradlePath,
+        `project.ext.react = [\n    enableHermes: false,  // clean and rebuild if changing\n]\n\napply from: \"../../node_modules/react-native/react.gradle\"`,
+        `project.ext.react = [\n    enableHermes: false,  // clean and rebuild if changing\n]\n\napply from: \"../../node_modules/react-native/react.gradle\"\napply from: project(':react-native-config').projectDir.getPath() + \"/dotenv.gradle\"`
+    );
+    await CustomPromise.replaceStringFilePromise(
+        appBuildGradlePath,
+        `defaultConfig {\n        applicationId \"com.${appName}\"\n        minSdkVersion rootProject.ext.minSdkVersion\n        targetSdkVersion rootProject.ext.targetSdkVersion\n        versionCode 1\n        versionName \"1.0\"\n    }`,
+        `defaultConfig {\n        applicationId env.get(\"ANDROID_APP_ID\")\n        minSdkVersion rootProject.ext.minSdkVersion\n        targetSdkVersion rootProject.ext.targetSdkVersion\n        versionCode Integer.valueOf(env.get(\"ANDROID_APP_VERSION_CODE\"))\n        versionName env.get(\"ANDROID_APP_VERSION_NAME\")\n        multiDexEnabled true\n        resValue \"string\", \"build_config_package\", \"com.${appName}\"\n    }`
+    );
+    await CustomPromise.replaceStringFilePromise(
+        appBuildGradlePath,
+        `signingConfigs {\n        debug {\n            storeFile file('debug.keystore')\n            storePassword 'android'\n            keyAlias 'androiddebugkey'\n            keyPassword 'android'\n        }\n    }`,
+        `signingConfigs {\n        debug {\n            storeFile file(DEBUG_STORE_FILE)\n            storePassword DEBUG_STORE_PASSWORD\n            keyAlias DEBUG_KEY_ALIAS\n            keyPassword DEBUG_KEY_PASSWORD\n        }\n        development {\n            storeFile file(DEBUG_STORE_FILE)\n            storePassword DEBUG_STORE_PASSWORD\n            keyAlias DEBUG_KEY_ALIAS\n            keyPassword DEBUG_KEY_PASSWORD\n        }\n        staging {\n            storeFile file(STAGING_STORE_FILE)\n            storePassword STAGING_STORE_PASSWORD\n            keyAlias STAGING_KEY_ALIAS\n            keyPassword STAGING_KEY_PASSWORD\n        }\n        product {\n            storeFile file(PRODUCT_STORE_FILE)\n            storePassword PRODUCT_STORE_PASSWORD\n            keyAlias PRODUCT_KEY_ALIAS\n            keyPassword PRODUCT_KEY_PASSWORD\n        }\n    }`
+    );
+    await CustomPromise.replaceStringFilePromise(
+        appBuildGradlePath,
+        `// applicationVariants are e.g. debug, release`,
+        `flavorDimensions \"enviroment\"\n    productFlavors {\n        dev {\n            dimension \"enviroment\"\n            resValue \"string\", \"app_name\", project.env.get(\"APP_NAME\")\n            resValue \"string\", \"CodePushDeploymentKey\", project.env.get(\"CODEPUSH_ANDROID_DEVELOPMENT_KEY\")\n            signingConfig signingConfigs.staging\n        }\n        staging {\n            dimension \"enviroment\"\n            resValue \"string\", \"app_name\", project.env.get(\"APP_NAME\")\n            resValue \"string\", \"CodePushDeploymentKey\", project.env.get(\"CODEPUSH_ANDROID_DEVELOPMENT_KEY\")\n            signingConfig signingConfigs.staging\n        }\n        product {\n            dimension \"enviroment\"\n            resValue \"string\", \"app_name\", project.env.get(\"APP_NAME\")\n            resValue \"string\", \"CodePushDeploymentKey\", project.env.get(\"CODEPUSH_ANDROID_DEVELOPMENT_KEY\")\n            signingConfig signingConfigs.product\n        }\n    }\n\n\n    // applicationVariants are e.g. debug, release\n`
+    );
+    await CustomPromise.replaceStringFilePromise(
+        appBuildGradlePath,
+        `apply from: file(\"../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle\"); applyNativeModulesAppBuildGradle(project)\n`,
+        `apply from: file(\"../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle\"); applyNativeModulesAppBuildGradle(project)\napply from: \"../../node_modules/react-native-code-push/android/codepush.gradle\"\n`
+    );
+
+    // Fixing settings.gradle
+    const settingsGradlePath = `./${appName}/android/settings.gradle`;
+    await CustomPromise.replaceStringFilePromise(
+        settingsGradlePath,
+        `apply from: file(\"../node_modules/@react-native-community/cli-platform-android/native_modules.gradle\"); applyNativeModulesSettingsGradle(settings)\ninclude ':app'`,
+        `apply from: file(\"../node_modules/@react-native-community/cli-platform-android/native_modules.gradle\"); applyNativeModulesSettingsGradle(settings)\ninclude ':app', ':react-native-code-push'\nproject(':react-native-code-push').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-code-push/android/app')\n`
+    );
+
+    // Fix res value string xml
+    const resStringPath = `./${appName}/android/app/src/main/res/values/strings.xml`;
+    await CustomPromise.replaceStringFilePromise(
+        resStringPath,
+        `<resources>\n    <string name=\"app_name\">${appDisplayName}</string>\n</resources>`,
+        `<resources/>`
+    );
+};
+
+const handlePreProcessParams = async () => {
     // Check for update
     const checkUpdateResult = await Helpers.checkUpdate();
     const { notifyType, boxenObj } = checkUpdateResult;
@@ -225,20 +301,23 @@ const handleInstallPackages = async () => {
                 `Removing folder ${currPath}...`
             );
         } else {
-            return;
+            return false;
         }
     }
 
     const resultQuestions = await CustomPromise.promptGetListQuestionPromise(
         listQuestions
     );
-    const listQuestionsAppCode = ["App code (example: app, skn, tag,...): "];
+    const listQuestionsAppCode = ["App code (3 characters - example: app, skn, tag,...): "];
     const resultAppCode = await CustomPromise.promptGetListQuestionPromise(
         listQuestionsAppCode
     );
     appCode = resultAppCode[listQuestionsAppCode[0]].trim();
-    appName = resultQuestions[listQuestions[0]];
+    appName = resultQuestions[listQuestions[0]].trim().replace(/-/g, "");
     appDisplayName = resultQuestions[listQuestions[1]];
+    console.log(`AppName: ${appName}`);
+    console.log(`AppDisplayName: ${appDisplayName}`);
+    console.log(`AppCode: ${appCode}`);
     const newPath = `./${appName}`;
 
     const normalFlowInstall = async () => {
@@ -350,7 +429,7 @@ const handleInstallPackages = async () => {
         await CustomPromise.gitClonePromise();
         fs.renameSync(currPath, newPath);
         await normalFlowInstall();
-        return;
+        return true;
     }
     if (fs.existsSync(newPath)) {
         const listQuestionsOverrideRepo = [
@@ -378,13 +457,15 @@ const handleInstallPackages = async () => {
                 `Removing folder ${currPath}...`
             );
             await normalFlowInstall();
-            return;
+            return true;
         }
-        return;
+        return false;
     }
+    return true;
 };
 
 const handleSetUpRNConfig = async () => {
+    // Setup iOS
     await setUpIosConfigWithEnv(
         `development`,
         appName,
@@ -394,6 +475,10 @@ const handleSetUpRNConfig = async () => {
     await setUpIosConfigWithEnv(`staging`, appName, appDisplayName, appCode);
     await setUpIosConfigWithEnv(`production`, appName, appDisplayName, appCode);
     console.log("Done setting up react-native-config iOS!");
+
+    // Setup Android
+    await setUpAndroidConfigAllEnvs(appName, appDisplayName, appCode);
+    console.log("Done setting up react-native-config Android!");
 };
 
 const handleRunSimulatorIOS = async () => {
@@ -406,14 +491,14 @@ const handleRunSimulatorIOS = async () => {
 const main = async () => {
     try {
         // Check pre-conditions
-        const checkPreProcess = await isPreProcessParamsSuccessful();
-        if (!checkPreProcess) {
-            return;
-        }
+        const preProcessBoolean = await handlePreProcessParams();
+        if (!preProcessBoolean) return;
         // Decorate first cmd line
         await handleDecorateFirstInit();
         // Install NPM packages
-        await handleInstallPackages();
+        const installPackageBoolean = await handleInstallPackages();
+        if (!installPackageBoolean) return;
+        
         if (!isWinOS) {
             // Setup React Native config iOS
             await handleSetUpRNConfig();
@@ -423,10 +508,7 @@ const main = async () => {
             const postInstallQuestion = "What do you want to do next?";
             const postInstallAnswerObj = await CustomPromise.getRadioButtonAnswerPromise(
                 postInstallQuestion,
-                [
-                    "Run on iOS simulator",
-                    "Nothing",
-                ]
+                ["Run on iOS simulator", "Nothing"]
             );
             const postInstallAnswer = postInstallAnswerObj[postInstallQuestion];
             // Running on device iOS

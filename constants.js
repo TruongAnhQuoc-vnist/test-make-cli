@@ -11,6 +11,8 @@ const XCSchemeStringPROD =
 
 const XCConfigString = `#include? "tmp.xcconfig"`;
 
+const KeyStorePassword = `amela@123`;
+
 const Constants = {
     IDEWorkspaceString,
     locationWhenInUseString,
@@ -18,6 +20,7 @@ const Constants = {
     XCSchemeStringSTG,
     XCSchemeStringPROD,
     XCConfigString,
+    KeyStorePassword,
 };
 
 module.exports = Constants;

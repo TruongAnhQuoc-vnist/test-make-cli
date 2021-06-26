@@ -6,6 +6,8 @@ const { Spinner } = require("clui");
 const { exec } = require("child_process");
 const fs = require("fs");
 const inquirer = require("inquirer");
+const Keytool = require("./keytool-utils/keytool");
+const Constants = require("./constants");
 
 // import simpleGit from 'simple-git';
 // const git = simpleGit();
@@ -123,12 +125,25 @@ const readFilePromise = async (filePath) => {
     });
 };
 
+const appendFilePromise = async (filePath, content) => {
+    return new Promise((resolve, reject) => {
+        fs.appendFile(filePath, content, (err) => {
+            if (err) {
+                console.log("Append file err: ", err);
+                reject(err);
+            } else {
+                resolve(null);
+            }
+        });
+    });
+};
+
 const getRadioButtonAnswerPromise = async (question, choices) => {
     const questionsList = [
         {
-			type: "rawlist",
-			name: question,
-			choices,
+            type: "rawlist",
+            name: question,
+            choices,
         },
     ];
     return new Promise((resolve, reject) => {
@@ -151,7 +166,41 @@ const parseXCodeProjectPromise = async (myProj) => {
             } else {
                 resolve(null);
             }
-        })
+        });
+    });
+};
+
+const createKeyStorePromise = async (appCode, envMode = 'staging', debugMode = false) => {
+    const alias = `${appCode}-${envMode}-alias`;
+    const dname = "CN=" + alias;
+    const keypass = Constants.KeyStorePassword;
+    const keysize = "2048";
+    const keyalg = "RSA";
+    const validity = 10000;
+    const valid_from = new Date();
+    return new Promise((resolve, reject) => {
+        const store = Keytool(`${appCode}-${envMode}-key.keystore`, Constants.KeyStorePassword, {
+            debug: debugMode,
+            storetype: "JCEKS",
+        });
+        store.genkeypair(
+            alias,
+            keypass,
+            dname,
+            validity,
+            keysize,
+            keyalg,
+            null,
+            null,
+            valid_from,
+            function (err, res) {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(res);
+                }
+            }
+        );
     });
 };
 
@@ -162,8 +211,10 @@ const CustomPromise = {
     replaceStringFilePromise,
     createNewFilePromise,
     readFilePromise,
+    appendFilePromise,
     getRadioButtonAnswerPromise,
     parseXCodeProjectPromise,
+    createKeyStorePromise,
 };
 
 module.exports = CustomPromise;
